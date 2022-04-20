@@ -30,14 +30,25 @@ const setWarning = (message) => {
     }
 }
 
-const setCustom = (status, message = '')  => {
+const setCustom = (status, message = '', data = null)  => {
     let reply = {
-        status
+        status,
+        message
     }
 
-    if (message) {
-        reply.message
-    }
+    if (data) {
+        if (typeof(data) === 'object') {
+            for (let key in data) {
+                if (data.hasOwnProperty(key)) {
+                   reply[key] = data[key]                   
+                }
+            }
+        }        
+
+        if (typeof(data) === 'array') {            
+            reply.data = data
+        }
+    }       
 
     return reply
 }

@@ -3,6 +3,7 @@ const DB = require('./DB')
 const sqlQueryBuilder = require('./SQLQueryBuilder')
 const Password = require('../classes/Password')
 const Token = require('../classes/Token')
+const axios = require('axios')
 
 class User {
 
@@ -44,7 +45,7 @@ class User {
     // end of getUserByEmail function
     }
 
-    prepareTokenFields(user) {
+    prepareUserTokenFields(user) {
         try {
             const data = {
                 userTokenFieldsData : {
@@ -89,45 +90,39 @@ class User {
         }
     }
 
-    async checkLoginCredentials(emailAddress, password) {
+    async signin(emailAddress, password) {
         try {
-            const user = await this.getUserByEmail(emailAddress)
-            if (user.status === 'error') {
-                throw new Error(user.message)
+            const userResult = await this.getUserByEmail(emailAddress)
+
+            if (userResult.status !== 'ok') {
+                return userResult
             }
 
-            if (user.status !== 'ok') {
-                return user
-            }
-
-            let passwordVerified = new Password()
-            passwordVerified = passwordVerified.decryptPassword(password, user.user.Password)
-            if (passwordVerified.status === 'error') {
-                throw new Error(passwordVerified.message)
+            let passwordVerifiedResult = new Password()
+            passwordVerifiedResult = passwordVerifiedResult.decryptPassword(password, userResult.user.Password)
+            if (passwordVerifiedResult.status !== 'ok') {
+                return passwordVerifiedResult
             }
             
-            const userTokenFieldsData = this.prepareTokenFields(user.user)
-            if (userTokenFieldsData.status === 'error') {
-                throw new Error(userTokenFieldsData.message)
-            }
-            if (userTokenFieldsData.status !== 'ok') {
-                return userTokenFieldsData
+            const userTokenFieldsResult = this.prepareUserTokenFields(userResult.user)
+            if (userTokenFieldsResult.status !== 'ok') {
+                return userTokenFieldsResult
             }
 
             let token = new Token()
-            const tokenGenerated = token.generateToken(userTokenFieldsData.userTokenFieldsData)
-            if (tokenGenerated.status !== 'ok') {
-                return tokenGenerated
+            const tokenGeneratedResult = token.generateToken(userTokenFieldsResult.userTokenFieldsData)
+            if (tokenGeneratedResult.status !== 'ok') {
+                return tokenGeneratedResult
             }            
 
-            const tokenVerified = token.verifyToken(tokenGenerated.token)
-            if (tokenVerified.status !== 'ok') {
-                return tokenVerified
+            const tokenVerifiedResult = token.verifyToken(tokenGeneratedResult.token)
+            if (tokenVerifiedResult.status !== 'ok') {
+                return tokenVerifiedResult
             }
 
             const data = {
-                token: tokenGenerated.token,
-                user: user.user
+                token: tokenGeneratedResult.token,
+                user: userResult.user
             }
 
 
@@ -137,7 +132,7 @@ class User {
         }
     }
 
-    async updatePassword(emailAddress, newPassword) {
+    async changePassword(emailAddress, newPassword) {
         try {
             let encryptedPassword = new Password().encryptPassword(newPassword)
             const salt = encryptedPassword.salt
@@ -145,7 +140,7 @@ class User {
 
             const sqlQuery = new sqlQueryBuilder()
                                  .update(process.env.TABLE_USERS)
-                                 .set({ Password: encryptedPassword, Password2: newPassword, Salt: salt })
+                                 .set({ Password: encryptedPassword, Password2: newPassword, Salt: salt, Should_Change_Password: 'No' })
                                  .where({ Email: emailAddress })
                                  .get()
 
@@ -163,6 +158,41 @@ class User {
             return setError(error)
         }
     }
+
+    async emailResetPasswordLink(emailAddress, linkToUrl) {
+        try {
+            const getUserByEmailResult = await this.getUserByEmail(emailAddress)
+            if (getUserByEmailResult.status !== 'ok') {
+                return getUserByEmailResult
+            }
+
+            const token = new Token()
+            const generateTokenResult = token.generateToken(this.prepareUserTokenFields(getUserByEmailResult.user))
+            if (generateTokenResult.status !== 'ok') {
+                return generateTokenResult
+            }
+
+            linkToUrl += '/' + generateTokenResult.token
+
+            const data = {
+                email: emailAddress,
+                name: getUserByEmailResult.user.Name,
+                subject: 'Password reset link',
+                message: 'Hi ' + getUserByEmailResult.user.Name +
+                         '<br><br>Please find your IBOS password reset link below<br><br><a href="'+ linkToUrl + '">Click here to reset your password</a>'
+            }
+            
+            const postRequestResult = await axios.post('https://support.gozlens.com/sendemail.php', data);           
+
+            return postRequestResult
+            
+
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
 }
 
 module.exports = User

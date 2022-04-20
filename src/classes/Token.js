@@ -48,8 +48,8 @@ class Token {
       }
   
       if (!ignoreShouldChangePassword) {
-        if (result.shouldChangePassword === 1) {
-          return setCustom('shouldChangePassword')
+        if (result.shouldChangePassword === 'Yes') {
+          return setCustom('shouldChangePassword', 'Please change your password', { token })
         }
       }
       
