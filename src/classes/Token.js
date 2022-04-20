@@ -5,11 +5,14 @@ const config = require('../config')
 
 class Token {
   // start of generate token function
-  generateToken(payload = {}) {
-    try {
-        const jwtOptions = {
+  generateToken(payload = {}, expiresIn = null) {
+    try {      
+        let jwtOptions = {
           expiresIn: config.tokenExpiresIn + 'd'
-        }    
+        }            
+        if (expiresIn) {
+          jwtOptions.expiresIn = expiresIn + 'h'
+        }
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, jwtOptions)
 

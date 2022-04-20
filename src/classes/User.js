@@ -162,14 +162,23 @@ class User {
     async emailResetPasswordLink(emailAddress, linkToUrl) {
         try {
             const getUserByEmailResult = await this.getUserByEmail(emailAddress)
-            if (getUserByEmailResult.status !== 'ok') {
-                return getUserByEmailResult
+            if (getUserByEmailResult.status === 'warning') {
+                 return setWarning('Please check your email address (' + emailAddress + ' is not registered)')
+            }
+
+            if (getUserByEmailResult.status === 'error') {
+                throw new Error(getUserByEmailResult.message)
+            }
+
+            const userTokenFieldsResult = this.prepareUserTokenFields(getUserByEmailResult.user)
+            if (userTokenFieldsResult.status !== 'ok') {
+                return userTokenFieldsResult
             }
 
             const token = new Token()
-            const generateTokenResult = token.generateToken(this.prepareUserTokenFields(getUserByEmailResult.user))
+            const generateTokenResult = token.generateToken(userTokenFieldsResult.userTokenFieldsData, 24)
             if (generateTokenResult.status !== 'ok') {
-                return generateTokenResult
+                throw new Error('Your password reset link is expired, please get a new password reset link')
             }
 
             linkToUrl += '/' + generateTokenResult.token
@@ -179,15 +188,13 @@ class User {
                 name: getUserByEmailResult.user.Name,
                 subject: 'Password reset link',
                 message: 'Hi ' + getUserByEmailResult.user.Name +
-                         '<br><br>Please find your IBOS password reset link below<br><br><a href="'+ linkToUrl + '">Click here to reset your password</a>'
+                         '<br><br>Please find your IBOS password reset link below<br><br><a href="'+ linkToUrl + '">Click here to reset your password</a>'+
+                         '<br><br><i>Note: password reset link will expire in 24 Hours</i>'
             }
             
-            const postRequestResult = await axios.post('https://support.gozlens.com/sendemail.php', data);           
+            await axios.post('https://support.gozlens.com/sendemail.php', data);           
 
-            return postRequestResult
-            
-
-
+            return setSuccess()       
         } catch (error) {
             console.log(error)
         }

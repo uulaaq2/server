@@ -40,9 +40,9 @@ async function main(){
 
     //console.log(await user.updatePassword('muhittin.yendun@au.indorama.net', '222'))
 
-    const sendPasswordResetLinkResult = await user.emailResetPasswordLink('muhittin.yendun@au.indorama.net', 'http://localhost:3000/forgotpassword')
+    //const sendPasswordResetLinkResult = await user.emailResetPasswordLink('muhittin.yendun@au.indorama.net', 'http://localhost:3000/forgotpassword')
 
-    console.log(sendPasswordResetLinkResult)
+    //console.log(sendPasswordResetLinkResult)
 }
 
 main().catch(error => console.log('main function error ', error))
