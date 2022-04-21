@@ -1,0 +1,8 @@
+POST https://support.gozlens.com/sendemail.php
+
+{
+  "email": "muhittin.yendun@au.indorama.net",
+  "name": "Muhttin Yendun",
+  "subject": "Password reset link",
+  "message": "Please find your password reset link below<br><br><a href='aaa'>Click here to reset your password</a>"
+};
