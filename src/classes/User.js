@@ -48,12 +48,14 @@ class User {
     prepareUserTokenFields(user) {
         try {
             const data = {
-                userTokenFieldsData : {
+                userTokenFields : {
+                    accountExpiresAt: user.Expires_At,
                     email: user.Email,
                     password: user.Password,
                     avatar: user.Avatar,
                     site: user.Site,
-                    accountExpiresAt: user.Expires_At,
+                    homePage: user.Home_Page,
+                    canBeRemembered: user.Can_Be_Remembered,
                     shouldChangePassword: user.Should_Change_Password
                 }
             }
@@ -110,7 +112,7 @@ class User {
             }
 
             let token = new Token()
-            const tokenGeneratedResult = token.generateToken(userTokenFieldsResult.userTokenFieldsData)
+            const tokenGeneratedResult = token.generateToken(userTokenFieldsResult.userTokenFields)
             if (tokenGeneratedResult.status !== 'ok') {
                 return tokenGeneratedResult
             }            
@@ -176,7 +178,7 @@ class User {
             }
 
             const token = new Token()
-            const generateTokenResult = token.generateToken(userTokenFieldsResult.userTokenFieldsData, 24)
+            const generateTokenResult = token.generateToken(userTokenFieldsResult.userTokenFields, 24)
             if (generateTokenResult.status !== 'ok') {
                 throw new Error('Your password reset link is expired, please get a new password reset link')
             }

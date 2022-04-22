@@ -67,6 +67,26 @@ class SQLQueryBuilder {
             return this
         }
 
+        like(likeFields) { 
+            let tempFields = []         
+            let tempValueText = ''
+    
+            for (let key in likeFields) {
+                if (likeFields.hasOwnProperty(key)) {
+                   if (likeFields[key] !== '') {
+                    tempFields.push(`${key} like ?`)
+                    tempValueText = '%' + likeFields[key] + '%';
+                    this.values.push(tempValueText)
+                   }
+                }
+            }
+    
+            if (tempFields.length > 0) {             
+                this.pieces.push(`WHERE ${tempFields.join(' AND ')}`)
+            }
+            return this
+        }
+
         orderBy(orderByFields) {
             this.pieces.push(`ORDER BY ${orderByFields}`)
 

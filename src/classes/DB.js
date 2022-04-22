@@ -41,7 +41,7 @@ class DB {
                     resolve(setError(error))
                 }
 
-                if (results.length === 0) {
+                if (!results || results.length === 0) {
                     resolve(setWarning('No record found'))
                 }
 
